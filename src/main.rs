@@ -2,6 +2,7 @@ pub mod app;
 pub mod event;
 pub mod handle;
 pub mod player;
+pub mod song;
 pub mod tui;
 pub mod ui;
 
@@ -23,7 +24,7 @@ fn main() -> Result<()> {
     let terminal = Terminal::new(backend)?;
     let (sender, receiver) = mpsc::channel::<AppEvent>();
 
-    let terminal_handler = EventHandler::new(sender.clone(), 250);
+    let _terminal_handler = EventHandler::new(sender.clone(), 250);
     let mut player_hanlder = PlayerHandler::new(sender.clone(), 100);
 
     let mut tui = Tui::new(terminal);

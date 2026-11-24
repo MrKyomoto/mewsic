@@ -1,11 +1,10 @@
 use color_eyre::eyre::Result;
-use ratatui::crossterm::event;
 use rodio::MixerDeviceSink;
 use rodio::Player;
 use rodio::{Decoder, DeviceSinkBuilder};
 use std::fs::File;
 use std::io::BufReader;
-use std::sync::mpsc::{self, Receiver, Sender};
+use std::sync::mpsc::{self, Sender};
 use std::thread::{self, JoinHandle};
 use std::time::Instant;
 use std::{path::PathBuf, time::Duration};
@@ -35,7 +34,7 @@ pub enum PlayerEvent {
 }
 
 pub struct PlayerEngine {
-    sink: MixerDeviceSink,
+    _sink: MixerDeviceSink,
     player: Player,
     is_muted: bool,
     volume: f32,
@@ -46,7 +45,7 @@ impl PlayerEngine {
         let sink = DeviceSinkBuilder::open_default_sink()?;
         let player = Player::connect_new(sink.mixer());
         Ok(Self {
-            sink,
+            _sink: sink,
             player,
             is_muted: false,
             volume: 0.0,
@@ -115,7 +114,7 @@ impl PlayerEngine {
 
 pub struct PlayerHandler {
     sender: Sender<PlayerCommand>,
-    handle: JoinHandle<()>,
+    _handle: JoinHandle<()>,
 }
 
 impl PlayerHandler {
@@ -123,7 +122,7 @@ impl PlayerHandler {
         let tick_rate = Duration::from_millis(tick_rate);
         let (sender, receiver) = mpsc::channel::<PlayerCommand>();
 
-        let handle = {
+        let _handle = {
             thread::spawn(move || {
                 let mut engine = match PlayerEngine::new() {
                     Ok(engine) => engine,
@@ -209,7 +208,7 @@ impl PlayerHandler {
             })
         };
 
-        Self { sender, handle }
+        Self { sender, _handle }
     }
 
     pub fn send(&self, command: PlayerCommand) {
