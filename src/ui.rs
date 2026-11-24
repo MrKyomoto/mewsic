@@ -6,7 +6,11 @@ use ratatui::{
     widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph, Wrap},
 };
 
-use crate::app::{App, MainSubScene::SideBar};
+use crate::app::{
+    App,
+    MainSubScene::{self, SideBar},
+    Scene::Main,
+};
 
 pub fn render(app: &mut App, frame: &mut Frame) {
     // NOTE: always render Main, hightlight the focued one
@@ -15,11 +19,18 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
         .split(frame.area());
 
+    let active_style = Style::default().fg(Color::LightGreen);
+    let inactive_style = Style::default().fg(Color::Gray);
     let sidebar = main_layout[0];
     let sidebar_title = Line::from("Mew Lib");
     let sidebar_block = Block::new()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
+        .border_style(if matches!(app.scene, Main(MainSubScene::SideBar)) {
+            active_style
+        } else {
+            inactive_style
+        })
         .title(sidebar_title);
     let songs = app
         .music_lib
@@ -39,6 +50,11 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     let player_block = Block::new()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
+        .border_style(if matches!(app.scene, Main(MainSubScene::Player)) {
+            active_style
+        } else {
+            inactive_style
+        })
         .title(Line::from("Playing Something...").centered());
     frame.render_widget(player_block, player);
 }

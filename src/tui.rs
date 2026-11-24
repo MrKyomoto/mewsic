@@ -18,13 +18,11 @@ use crate::{app::App, event::EventHandler, ui};
 pub struct Tui {
     /// Interface to the Terminal.
     terminal: CrosstermTerminal,
-    /// Terminal event handler.
-    pub events: EventHandler,
 }
 
 impl Tui {
-    pub fn new(terminal: CrosstermTerminal, events: EventHandler) -> Self {
-        Self { terminal, events }
+    pub fn new(terminal: CrosstermTerminal) -> Self {
+        Self { terminal }
     }
 
     /// Init the terminal interface

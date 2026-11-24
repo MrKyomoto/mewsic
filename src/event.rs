@@ -1,11 +1,13 @@
 use std::{
-    sync::mpsc,
+    sync::mpsc::Sender,
     thread,
     time::{Duration, Instant},
 };
 
 use color_eyre::eyre::Result;
 use ratatui::crossterm::event::{self, Event as CrosstermEvent, KeyEvent, MouseEvent};
+
+use crate::app::AppEvent;
 
 /// Terminal events
 #[derive(Debug, Clone, Copy)]
@@ -23,20 +25,15 @@ pub enum Event {
 /// Terminal event handler
 #[derive(Debug)]
 pub struct EventHandler {
-    /// Event sender channel
-    #[allow(dead_code)]
-    sender: mpsc::Sender<Event>,
-    /// Event receiver channel
-    receiver: mpsc::Receiver<Event>,
     /// Event handler thread
     #[allow(dead_code)]
     handler: thread::JoinHandle<()>,
 }
 
 impl EventHandler {
-    pub fn new(tick_rate: u64) -> Self {
+    pub fn new(sender: Sender<AppEvent>, tick_rate: u64) -> Self {
         let tick_rate = Duration::from_millis(tick_rate);
-        let (sender, receiver) = mpsc::channel();
+
         let handler = {
             let sender = sender.clone();
             thread::spawn(move || {
@@ -52,13 +49,17 @@ impl EventHandler {
                         match event::read().expect("unable to read event") {
                             CrosstermEvent::Key(e) => {
                                 if e.kind == event::KeyEventKind::Press {
-                                    sender.send(Event::Key(e))
+                                    sender.send(AppEvent::Terminal(Event::Key(e)))
                                 } else {
                                     Ok(())
                                 }
                             }
-                            CrosstermEvent::Mouse(e) => sender.send(Event::Mouse(e)),
-                            CrosstermEvent::Resize(w, h) => sender.send(Event::Resize(w, h)),
+                            CrosstermEvent::Mouse(e) => {
+                                sender.send(AppEvent::Terminal(Event::Mouse(e)))
+                            }
+                            CrosstermEvent::Resize(w, h) => {
+                                sender.send(AppEvent::Terminal(Event::Resize(w, h)))
+                            }
                             CrosstermEvent::FocusGained | CrosstermEvent::FocusLost => Ok(()),
                             _e => unimplemented!("{_e:#?} unimplemented"),
                         }
@@ -66,21 +67,15 @@ impl EventHandler {
                     }
 
                     if last_tick.elapsed() >= tick_rate {
-                        sender.send(Event::Tick).expect("failed to send tick event");
+                        sender
+                            .send(AppEvent::Terminal(Event::Tick))
+                            .expect("failed to send tick event");
                         last_tick = Instant::now();
                     }
                 }
             })
         };
 
-        Self {
-            sender,
-            receiver,
-            handler,
-        }
-    }
-
-    pub fn next(&self) -> Result<Event> {
-        Ok(self.receiver.recv()?)
+        Self { handler }
     }
 }

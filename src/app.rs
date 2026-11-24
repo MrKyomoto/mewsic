@@ -13,7 +13,7 @@ use lofty::{
 };
 use ratatui::widgets::ListState;
 
-use crate::app::Scene::Main;
+use crate::{app::Scene::Main, event::Event, player::PlayerEvent};
 
 pub enum Scene {
     Main(MainSubScene),
@@ -64,6 +64,8 @@ pub struct MusicPlayerState {
     pub play_index: Option<usize>,
     pub play_mode: PlayMode,
     pub position: Duration,
+    pub volume: f32,
+    pub is_mute: bool,
 }
 
 impl MusicPlayerState {
@@ -75,6 +77,27 @@ impl MusicPlayerState {
             play_index: None,
             play_mode: PlayMode::Circle,
             position: Duration::ZERO,
+            volume: 1.0,
+            is_mute: false,
+        }
+    }
+
+    pub fn init_play_list(&mut self, song_count: usize, selected: usize) {
+        self.play_list.clear();
+        match self.play_mode {
+            PlayMode::Circle => {
+                self.play_list = (0..song_count).collect();
+                self.play_index = Some(selected);
+            }
+            PlayMode::One => {
+                self.play_list.push(selected);
+                self.play_index = Some(0);
+            }
+            PlayMode::Random => {
+                // TODO: impl with rand
+                self.play_list = (0..song_count).collect();
+                self.play_index = self.play_list.iter().position(|&idx| idx == selected);
+            }
         }
     }
 }
@@ -169,6 +192,11 @@ pub struct App {
     pub music_lib: MusicLib,
 }
 
+pub enum AppEvent {
+    Terminal(Event),
+    Player(PlayerEvent),
+}
+
 impl App {
     pub fn new() -> Self {
         Self {
@@ -187,5 +215,9 @@ impl App {
 
     pub fn quit(&mut self) {
         self.running = false;
+    }
+
+    pub fn play_sel_music(&self) {
+        todo!()
     }
 }
