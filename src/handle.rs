@@ -3,6 +3,7 @@ use std::time::Duration;
 use crate::app::MainSubScene;
 use crate::app::PlayState;
 use crate::app::Scene;
+use crate::player::PlayerCommand;
 use crate::player::PlayerEvent;
 use crate::player::PlayerHandler;
 use crate::{app::App, event::Event};
@@ -87,17 +88,40 @@ mod key {
             KeyCode::Char('m') => {
                 player_handler.send(PlayerCommand::ToggleMute);
             }
+            KeyCode::Right if key_event.modifiers.contains(KeyModifiers::CONTROL) => {
+                let (i, path) = app.next_song();
+                player_handler.send(PlayerCommand::Play {
+                    index: i,
+                    path: path,
+                });
+            }
+            KeyCode::Left if key_event.modifiers.contains(KeyModifiers::CONTROL) => {
+                let (i, path) = app.prev_song();
+                player_handler.send(PlayerCommand::Play {
+                    index: i,
+                    path: path,
+                });
+            }
             KeyCode::Tab => app.scene = Scene::Main(MainSubScene::SideBar),
             _ => {}
         }
     }
 }
 
-pub fn handle_player_event(app: &mut App, player_event: PlayerEvent) {
+pub fn handle_player_event(
+    app: &mut App,
+    player_event: PlayerEvent,
+    player_handler: &mut PlayerHandler,
+) {
     match player_event {
         PlayerEvent::Started(index) => {
             app.music_player_state.play_state = PlayState::Playing;
             app.music_player_state.cur_song = Some(index);
+            app.music_player_state.play_index = app
+                .music_player_state
+                .play_list
+                .iter()
+                .position(|i| *i == index);
             app.music_player_state.position = Duration::ZERO;
         }
         PlayerEvent::Paused => {
@@ -117,8 +141,16 @@ pub fn handle_player_event(app: &mut App, player_event: PlayerEvent) {
         PlayerEvent::VolumeChanged(vol) => {
             app.music_player_state.volume = vol;
         }
-        PlayerEvent::Finished => {}
-        PlayerEvent::PositionUpdated(duration) => {}
+        PlayerEvent::Finished => {
+            let (i, path) = app.next_song();
+            player_handler.send(PlayerCommand::Play {
+                index: i,
+                path: path,
+            });
+        }
+        PlayerEvent::PositionUpdated(duration) => {
+            app.music_player_state.position = duration;
+        }
         PlayerEvent::Error(_) => {}
     }
 }

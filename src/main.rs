@@ -25,7 +25,7 @@ fn main() -> Result<()> {
     let (sender, receiver) = mpsc::channel::<AppEvent>();
 
     let _terminal_handler = EventHandler::new(sender.clone(), 250);
-    let mut player_hanlder = PlayerHandler::new(sender.clone(), 100);
+    let mut player_hanlder = PlayerHandler::new(sender.clone(), 1000);
 
     let mut tui = Tui::new(terminal);
     tui.enter()?;
@@ -38,7 +38,7 @@ fn main() -> Result<()> {
                 handle::handle_terminal_event(&mut app, event, &mut player_hanlder);
             }
             AppEvent::Player(player_event) => {
-                handle::handle_player_event(&mut app, player_event);
+                handle::handle_player_event(&mut app, player_event, &mut player_hanlder);
             }
         }
 

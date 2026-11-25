@@ -14,6 +14,15 @@ pub struct Song {
 }
 
 impl Song {
+    pub fn placeholder() -> Self {
+        Self {
+            name: String::from("Noting Playing"),
+            author: None,
+            album: None,
+            duration: Duration::ZERO,
+            path: PathBuf::default(),
+        }
+    }
     pub fn from_path(path: PathBuf) -> Self {
         let file = read_from_path(&path).unwrap();
         let duration = file.properties().duration();
@@ -36,5 +45,17 @@ impl Song {
             duration: duration,
             path: path,
         }
+    }
+}
+pub fn format_duration(duration: &Duration) -> String {
+    let total_sec = duration.as_secs();
+    let h = total_sec / 3600;
+    let min = (total_sec % 3600) / 60;
+    let s = total_sec % 60;
+
+    if h > 0 {
+        format!("{h:02}:{min:02}:{s:02}")
+    } else {
+        format!("{min:02}:{s:02}")
     }
 }

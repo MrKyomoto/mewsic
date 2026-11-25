@@ -1,5 +1,6 @@
 use std::{
     fs::{self},
+    path::PathBuf,
     time::Duration,
 };
 
@@ -37,7 +38,7 @@ impl MusicPlayerState {
             play_index: None,
             play_mode: PlayMode::Circle,
             position: Duration::ZERO,
-            volume: 1.0,
+            volume: 0.5,
             is_mute: false,
         }
     }
@@ -144,6 +145,13 @@ impl MusicLib {
             self.sel_song.select_previous();
         }
     }
+    pub fn get_song_detail_by_index(&self, index: usize) -> Option<&Song> {
+        if index >= self.songs.len() {
+            return None;
+        }
+
+        Some(&self.songs[index])
+    }
 }
 pub struct App {
     pub running: bool,
@@ -175,5 +183,38 @@ impl App {
 
     pub fn quit(&mut self) {
         self.running = false;
+    }
+
+    pub fn get_song_detail_by_index(&self, index: usize) -> Option<&Song> {
+        self.music_lib.get_song_detail_by_index(index)
+    }
+
+    pub fn next_song(&self) -> (usize, PathBuf) {
+        let next_index_in_play_list = (self.music_player_state.play_index.unwrap() + 1)
+            % self.music_player_state.play_list.len();
+        let next_index_in_mus_lib = self.music_player_state.play_list[next_index_in_play_list];
+        let path = self
+            .music_lib
+            .get_song_detail_by_index(next_index_in_mus_lib)
+            .unwrap()
+            .path
+            .clone();
+
+        (next_index_in_mus_lib, path)
+    }
+    pub fn prev_song(&self) -> (usize, PathBuf) {
+        let prev_index_in_play_list = (self.music_player_state.play_index.unwrap()
+            + self.music_player_state.play_list.len()
+            - 1)
+            % self.music_player_state.play_list.len();
+        let prev_index_in_mus_lib = self.music_player_state.play_list[prev_index_in_play_list];
+        let path = self
+            .music_lib
+            .get_song_detail_by_index(prev_index_in_mus_lib)
+            .unwrap()
+            .path
+            .clone();
+
+        (prev_index_in_mus_lib, path)
     }
 }

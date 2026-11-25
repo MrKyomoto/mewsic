@@ -42,13 +42,15 @@ pub struct PlayerEngine {
 
 impl PlayerEngine {
     pub fn new() -> Result<Self> {
-        let sink = DeviceSinkBuilder::open_default_sink()?;
+        let mut sink = DeviceSinkBuilder::open_default_sink()?;
+        sink.log_on_drop(false);
         let player = Player::connect_new(sink.mixer());
+        player.set_volume(0.5);
         Ok(Self {
             _sink: sink,
             player,
             is_muted: false,
-            volume: 0.0,
+            volume: 0.5,
         })
     }
 
