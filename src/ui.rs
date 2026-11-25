@@ -14,6 +14,7 @@ use crate::{
     app::{
         App,
         MainSubScene::{self, SideBar},
+        PlayMode,
         Scene::Main,
     },
     song::{self, Song, format_duration},
@@ -96,6 +97,13 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         crate::app::PlayState::Pause => Text::from("Pauused"),
     }
     .bold();
+    let play_mode = match app.music_player_state.play_mode {
+        PlayMode::Circle => Text::from("O"),
+        PlayMode::One => Text::from("·"),
+        PlayMode::Random => Text::from("r"),
+    }
+    .bold()
+    .centered();
     let volume_gauge = LineGauge::default()
         .style(Style::default().bg(Color::Black))
         .filled_style(Style::default().fg(Color::White))
@@ -123,7 +131,11 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         .split(inner);
     let player_bottom_layout = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Length(8), Constraint::Min(8)])
+        .constraints([
+            Constraint::Length(8),
+            Constraint::Length(8),
+            Constraint::Min(8),
+        ])
         .split(player_layout[2]);
     let gauge = LineGauge::default()
         .style(Style::default().bg(Color::Black))
@@ -144,7 +156,8 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     frame.render_widget(player_line, player_layout[0]);
     frame.render_widget(gauge, player_layout[1]);
     frame.render_widget(play_icon, player_bottom_layout[0]);
-    frame.render_widget(volume_gauge, player_bottom_layout[1]);
+    frame.render_widget(play_mode, player_bottom_layout[1]);
+    frame.render_widget(volume_gauge, player_bottom_layout[2]);
 }
 
 fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
